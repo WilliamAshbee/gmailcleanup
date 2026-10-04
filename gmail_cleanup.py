@@ -8,13 +8,13 @@ def batch_trash_sender(sender_email, dry_run=False):
     query = f"from:{sender_email}"
 
     print(f"Fetching messages for query: {query}")
-    results = service.users().messages().list(userId='me', q=query, maxResults=500).execute()
+    results = service.users().messages().list(userId='me', q=query, maxResults=500).execute(num_retries=8)
     messages = results.get('messages', [])
 
     # Handle pagination if there are more than 500 messages
     while 'nextPageToken' in results:
         page_token = results['nextPageToken']
-        results = service.users().messages().list(userId='me', q=query, pageToken=page_token, maxResults=500).execute()
+        results = service.users().messages().list(userId='me', q=query, pageToken=page_token, maxResults=500).execute(num_retries=8)
         messages.extend(results.get('messages', []))
 
     if not messages:
@@ -35,7 +35,7 @@ def batch_trash_sender(sender_email, dry_run=False):
             'ids': chunk,
             'addLabelIds': ['TRASH']
         }
-        service.users().messages().batchModify(userId='me', body=body).execute()
+        service.users().messages().batchModify(userId='me', body=body).execute(num_retries=8)
         print(f"Trashed {len(chunk)} messages.")
 
 
